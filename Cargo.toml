@@ -1,0 +1,11 @@
+[package]
+name = "sqlite-semver"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sqlite-loadable = {version = "0.0.5", path="../sqlite-loadable-rs"}
+semver = "1.0.17"
+
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
