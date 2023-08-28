@@ -76,7 +76,7 @@ pub fn semver_debug(context: *mut sqlite3_context, _values: &[*mut sqlite3_value
 pub fn semver_matches(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) -> Result<()> {
     let (version, input_type) = semver_version_from_value_or_cache(context, values, 0)?;
     let req = VersionReq::parse(api::value_text(values.get(1).unwrap())?).unwrap();
-    api::result_bool(context, req.matches(&version));
+    api::result_bool(context, req.matches(unsafe { &*version }));
     cleanup_semver_version_value_cached(context, version, input_type);
     Ok(())
 }
@@ -89,7 +89,14 @@ pub fn semver_gt(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) -
     Ok(())
 }
 
-fn compare(a: &str, b: &str) -> i32 {
+fn compare(a: &[u8], b: &[u8]) -> i32 {
+    let a = std::str::from_utf8(a);
+    let b = std::str::from_utf8(b);
+    let (a, b) = match (a, b) {
+        (Ok(a), Ok(b)) => (a, b),
+        _ => return -1,
+    };
+
     let a = Version::parse(a.strip_prefix('v').unwrap_or(a));
     let b = Version::parse(b.strip_prefix('v').unwrap_or(b));
     match (a, b) {
